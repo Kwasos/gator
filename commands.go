@@ -41,7 +41,7 @@ func handlerLogin(s *state, cmd command) error {
 		os.Exit(1)
 	}
 
-	err = s.Config.SetUser(cmd.args[0])
+	err = s.cfg.SetUser(cmd.args[0])
 	if err != nil {
 		return fmt.Errorf("error setting user: %v", err)
 	}
@@ -66,7 +66,7 @@ func handlerRegister(s *state, cmd command) error {
 	}
 	fmt.Printf("User created successfully\n")
 
-	err = s.Config.SetUser(cmd.args[0])
+	err = s.cfg.SetUser(cmd.args[0])
 	if err != nil {
 		return fmt.Errorf("error setting user: %v", err)
 	}
@@ -81,5 +81,20 @@ func handlerReset(s *state, cmd command) error {
 		os.Exit(1)
 	}
 	fmt.Println("Deleted users successfully")
+	return nil
+}
+
+func handlerGetUsers(s *state, cmd command) error {
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("error getting users: %v", err)
+	}
+	for _, user := range users {
+		if user.Name == s.cfg.CurrentUserName {
+			fmt.Printf("* %s (current)\n", user.Name)
+		} else {
+			fmt.Printf("* %s\n", user.Name)
+		}
+	}
 	return nil
 }
