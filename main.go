@@ -1,10 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
+	"github.com/Kwasos/gator/internal/database"
+
 	"github.com/Kwasos/gator/internal/config"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -13,14 +17,25 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	db, err := sql.Open("postgres", cfg.DBURL)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	appState := state{Config: &cfg}
+	defer db.Close()
+
+	dbQueries := database.New(db)
+
+	appState := state{Config: &cfg, db: dbQueries}
 
 	cmds := commands{
 		commands: map[string]func(*state, command) error{},
 	}
 
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
+	cmds.register("reset", handlerReset)
 
 	if len(os.Args) < 2 {
 		fmt.Println("missing argument")
