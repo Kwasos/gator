@@ -9,14 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, currentUser database.User) error {
 	if len(cmd.args) != 2 {
 		return fmt.Errorf("usage: %s <name> <url>", cmd.name)
-	}
-
-	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("error getting user: %v", err)
 	}
 
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
@@ -25,7 +20,7 @@ func handlerAddFeed(s *state, cmd command) error {
 		UpdatedAt: time.Now(),
 		Name:      cmd.args[0],
 		Url:       cmd.args[1],
-		UserID:    user.ID,
+		UserID:    currentUser.ID,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating feed: %v", err)
@@ -35,7 +30,7 @@ func handlerAddFeed(s *state, cmd command) error {
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID:    user.ID,
+		UserID:    currentUser.ID,
 		FeedID:    feed.ID,
 	})
 	if err != nil {
@@ -61,13 +56,9 @@ func handlerListFeeds(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, currentUser database.User) error {
 	if len(cmd.args) != 1 {
 		return fmt.Errorf("please speciy a single URL")
-	}
-	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("couldn't find user: %w", err)
 	}
 	feed, err := s.db.GetFeedByURL(context.Background(), cmd.args[0])
 	if err != nil {
@@ -77,7 +68,7 @@ func handlerFollow(s *state, cmd command) error {
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID:    user.ID,
+		UserID:    currentUser.ID,
 		FeedID:    feed.ID,
 	})
 	if err != nil {
@@ -88,14 +79,37 @@ func handlerFollow(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollowing(s *state, cmd command) error {
-	rows, err := s.db.GetFeedFollowsForUser(context.Background(), s.cfg.CurrentUserName)
+func handlerFollowing(s *state, cmd command, currentUser database.User) error {
+	rows, err := s.db.GetFeedFollowsForUser(context.Background(), currentUser.Name)
 	if err != nil {
 		return fmt.Errorf("error getting follows: %v", err)
 	}
+	if len(rows) == 0 {
+		fmt.Printf("%s is not following any feeds\n", currentUser.Name)
+		return nil
+	}
+	fmt.Printf("Feeds followed by %s:\n", currentUser.Name)
 	for _, row := range rows {
-		fmt.Printf("* Name: %s\n", row.FeedName)
-		fmt.Printf("* User: %s\n", row.UserName)
+		fmt.Printf("* %s\n", row.FeedName)
+	}
+	return nil
+}
+
+func handlerUnfollow(s *state, cmd command, currentUser database.User) error {
+	if len(cmd.args) != 1 {
+		return fmt.Errorf("please speciy a feed")
+	}
+	feed, err := s.db.GetFeedByURL(context.Background(), cmd.args[0])
+	if err != nil {
+		return fmt.Errorf("couldn't find feed: %w", err)
+	}
+	p := database.UnfollowParams{
+		UserID: currentUser.ID,
+		FeedID: feed.ID,
+	}
+	err = s.db.Unfollow(context.Background(), p)
+	if err != nil {
+		return fmt.Errorf("couldn't unfollow feed: %w", err)
 	}
 	return nil
 }
