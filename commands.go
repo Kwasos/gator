@@ -11,8 +11,8 @@ import (
 )
 
 type command struct {
-	name string
-	args []string
+	Name string
+	Args []string
 }
 
 type commands struct {
@@ -20,9 +20,9 @@ type commands struct {
 }
 
 func (c *commands) run(s *state, cmd command) error {
-	lookup, ok := c.commands[cmd.name]
+	lookup, ok := c.commands[cmd.Name]
 	if !ok {
-		return fmt.Errorf("the following command does not exist: %s", cmd.name)
+		return fmt.Errorf("the following command does not exist: %s", cmd.Name)
 	}
 	return lookup(s, cmd)
 }
@@ -32,25 +32,25 @@ func (c *commands) register(name string, f func(*state, command) error) {
 }
 
 func handlerLogin(s *state, cmd command) error {
-	if len(cmd.args) != 1 {
+	if len(cmd.Args) != 1 {
 		return fmt.Errorf("username is requred")
 	}
-	_, err := s.db.GetUser(context.Background(), cmd.args[0])
+	_, err := s.db.GetUser(context.Background(), cmd.Args[0])
 	if err != nil {
 		fmt.Println("error getting user:", err)
 		os.Exit(1)
 	}
 
-	err = s.cfg.SetUser(cmd.args[0])
+	err = s.cfg.SetUser(cmd.Args[0])
 	if err != nil {
 		return fmt.Errorf("error setting user: %v", err)
 	}
-	fmt.Printf("set user: %s\n", cmd.args[0])
+	fmt.Printf("set user: %s\n", cmd.Args[0])
 	return nil
 }
 
 func handlerRegister(s *state, cmd command) error {
-	if len(cmd.args) != 1 {
+	if len(cmd.Args) != 1 {
 		return fmt.Errorf("username is required")
 	}
 
@@ -58,7 +58,7 @@ func handlerRegister(s *state, cmd command) error {
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Name:      cmd.args[0],
+		Name:      cmd.Args[0],
 	})
 	if err != nil {
 		fmt.Println("error creating user:", err)
@@ -66,7 +66,7 @@ func handlerRegister(s *state, cmd command) error {
 	}
 	fmt.Printf("User created successfully\n")
 
-	err = s.cfg.SetUser(cmd.args[0])
+	err = s.cfg.SetUser(cmd.Args[0])
 	if err != nil {
 		return fmt.Errorf("error setting user: %v", err)
 	}

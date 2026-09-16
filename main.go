@@ -51,7 +51,7 @@ func main() {
 
 	commandName := os.Args[1]
 	argsSlice := os.Args[2:]
-	fullCommand := command{name: commandName, args: argsSlice}
+	fullCommand := command{Name: commandName, Args: argsSlice}
 	err = cmds.run(&appState, fullCommand)
 	if err != nil {
 		fmt.Println(err)

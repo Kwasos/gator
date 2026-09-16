@@ -10,16 +10,16 @@ import (
 )
 
 func handlerAddFeed(s *state, cmd command, currentUser database.User) error {
-	if len(cmd.args) != 2 {
-		return fmt.Errorf("usage: %s <name> <url>", cmd.name)
+	if len(cmd.Args) != 2 {
+		return fmt.Errorf("usage: %s <name> <url>", cmd.Name)
 	}
 
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Name:      cmd.args[0],
-		Url:       cmd.args[1],
+		Name:      cmd.Args[0],
+		Url:       cmd.Args[1],
 		UserID:    currentUser.ID,
 	})
 	if err != nil {
@@ -57,10 +57,10 @@ func handlerListFeeds(s *state, cmd command) error {
 }
 
 func handlerFollow(s *state, cmd command, currentUser database.User) error {
-	if len(cmd.args) != 1 {
+	if len(cmd.Args) != 1 {
 		return fmt.Errorf("please speciy a single URL")
 	}
-	feed, err := s.db.GetFeedByURL(context.Background(), cmd.args[0])
+	feed, err := s.db.GetFeedByURL(context.Background(), cmd.Args[0])
 	if err != nil {
 		return fmt.Errorf("couldn't find feed: %w", err)
 	}
@@ -96,10 +96,10 @@ func handlerFollowing(s *state, cmd command, currentUser database.User) error {
 }
 
 func handlerUnfollow(s *state, cmd command, currentUser database.User) error {
-	if len(cmd.args) != 1 {
+	if len(cmd.Args) != 1 {
 		return fmt.Errorf("please speciy a feed")
 	}
-	feed, err := s.db.GetFeedByURL(context.Background(), cmd.args[0])
+	feed, err := s.db.GetFeedByURL(context.Background(), cmd.Args[0])
 	if err != nil {
 		return fmt.Errorf("couldn't find feed: %w", err)
 	}
