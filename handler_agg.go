@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/Kwasos/gator/internal/database"
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 func handlerAgg(s *state, cmd command) error {
@@ -48,6 +50,32 @@ func scrapeFeeds(s *state) {
 		return
 	}
 	for _, item := range rssFeed.Channel.Item {
+		description := sql.NullString{
+			String: item.Description,
+			Valid:  item.Description != "",
+		}
+		publishedAt := sql.NullTime{}
+		t, err := time.Parse(time.RFC1123Z, item.PubDate)
+		if err == nil {
+			publishedAt = sql.NullTime{
+				Time:  t,
+				Valid: true,
+			}
+		}
+		if err != nil {
+			log.Printf("error parsing time: %v", err)
+		}
+		_, err = s.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now(), Title: item.Title, Url: item.Link, Description: description, PublishedAt: publishedAt, FeedID: feed.ID,
+		})
+		if err != nil {
+			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+				continue
+			} else {
+				log.Printf("couldn't create post: %v", err)
+				continue
+			}
+		}
 		log.Printf("Fetched: %v", item.Title)
 	}
 }
