@@ -47,13 +47,13 @@ Run the database migrations (using something like `goose`) before starting.
 
 ## Example Usage
 
-\`\`\`bash
-gator register alice
-gator login alice
-gator addfeed "Boot.dev Blog" https://blog.boot.dev/index.xml
-gator agg 1m
-gator browse 5
-\`\`\`
+\`\`\`bash  
+gator register alice  
+gator login alice  
+gator addfeed "Boot.dev Blog" https://blog.boot.dev/index.xml  
+gator agg 1m  
+gator browse 5  
+\`\`\`  
 
 ## License
 
